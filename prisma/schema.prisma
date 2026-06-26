@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String        @id @default(uuid())
+  email     String        @unique
+  createdAt DateTime      @default(now())
+  poolId    String
+  pool      Pool          @relation(fields: [poolId], references: [id])
+  apiKeys   ApiKey[]
+  ledger    UsageLedger[]
+}
+
+model ApiKey {
+  id        String    @id @default(uuid())
+  keyHash   String    @unique
+  label     String?
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+model Pool {
+  id           String        @id @default(uuid())
+  name         String
+  budgetTokens BigInt
+  periodStart  DateTime      @default(now())
+  users        User[]
+  ledger       UsageLedger[]
+}
+
+model UsageLedger {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  poolId       String
+  pool         Pool     @relation(fields: [poolId], references: [id])
+  model        String
+  inputTokens  Int
+  outputTokens Int
+  estimated    Int
+  createdAt    DateTime @default(now())
+
+  @@index([poolId, createdAt])
+  @@index([userId, createdAt])
+}
